@@ -72,67 +72,87 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.isChatInputCommand()) {
         const { commandName } = interaction;
 
-        if (commandName === "dudoancobac") {
-            const loai = interaction.options.getString("loai");
-            if (loai === "taixiu") {
-                const dbTX = await BetData.find({ type: 'tx' });
-                if (dbTX.length === 0) return interaction.reply("Mây k có data TX.");
+        // Ensure only the owner can execute restricted commands
+        const isOwner = interaction.user.id === OWNER_ID;
 
-                // 1. Tài Xỉu
-                const taiCount = dbTX.filter(h => h.score >= 11).length;
-                const taiRate = (taiCount / dbTX.length) * 100;
-                const predTX_Goc = taiRate >= 50 ? "TÀI" : "XỈU";
-                const predTX_Chot = Math.random() * 100 < taiRate ? "TÀI" : "XỈU";
-
-                // 2. Chẵn Lẻ
-                const chanCount = dbTX.filter(h => h.score % 2 === 0).length;
-                const chanRate = (chanCount / dbTX.length) * 100;
-                const predCL_Goc = chanRate >= 50 ? "CHẴN" : "LẺ";
-                const predCL_Chot = Math.random() * 100 < chanRate ? "CHẴN" : "LẺ";
-
-                // 3. Số
-                const counts = {}; dbTX.forEach(h => counts[h.score] = (counts[h.score] || 0) + 1);
-                const num_Goc = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-                const num_Chot = dbTX[Math.floor(Math.random() * dbTX.length)].score;
-
-                const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`neko_tx_${interaction.user.id}`).setLabel('Lưu TX').setStyle(ButtonStyle.Primary));
-                await interaction.reply({ 
-                    content: `📊 **PHÂN TÍCH CLOUD TX (${dbTX.length} ván)**\n━━━━━━━━━━━━━━━━━━\n🔴 **TÀI XỈU:**\n- Nhiều nhất: **${predTX_Goc}** (${Math.round(taiRate >= 50 ? taiRate : 100-taiRate)}%)\n- Dự đoán: **${predTX_Chot}**\n\n⚪ **CHẴN LẺ:**\n- Nhiều nhất: **${predCL_Goc}** (${Math.round(chanRate >= 50 ? chanRate : 100-chanRate)}%)\n- Dự đoán: **${predCL_Chot}**\n\n🎯 **SỐ:** Nhiều nhất **${num_Goc}** | Dự đoán **${num_Chot}**\n━━━━━━━━━━━━━━━━━━`, 
-                    components: [row] 
-                });
-            } else {
-                const dbBC = await BetData.find({ type: 'bc' });
-                if (dbBC.length === 0) return interaction.reply("Mây k có data BC.");
-                const flatAnimals = dbBC.flatMap(v => v.animals);
-                const counts = {}; flatAnimals.forEach(a => counts[a] = (counts[a] || 0) + 1);
-                const top1_Goc = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-                let chot = []; for (let i = 0; i < 3; i++) chot.push(flatAnimals[Math.floor(Math.random() * flatAnimals.length)]);
-                const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`neko_bc_${interaction.user.id}`).setLabel('Lưu BC').setStyle(ButtonStyle.Danger));
-                await interaction.reply({ content: `📊 **DỰ ĐOÁN BC CLOUD (${dbBC.length} ván)**\n━━━━━━━━━━━━━━━━━━\n✨ **Nhiều nhất:** Cao nhất **${top1_Goc}**\n🎲 **Dự đoán:** **${chot.join(" - ")}**\n━━━━━━━━━━━━━━━━━━`, components: [row] });
-            }
+        if (commandName === "start") {
+            if (!isOwner) return interaction.reply({ content: "❌ Bạn không có quyền sử dụng lệnh này.", ephemeral: true });
+            autoReply = true;
+            await interaction.reply("Bot On.");
         }
 
-        if (commandName === "soicau") {
-            const loai = interaction.options.getString("loai");
-            const data = await BetData.find({ type: loai === "taixiu" ? "tx" : "bc" }).sort({ createdAt: -1 }).limit(10);
-            const list = data.map((h, i) => `${i + 1}. **${h.score || h.resultStr}**`).join("\n");
-            await interaction.reply(`📜 **10 VÁN ${loai.toUpperCase()} MỚI NHẤT:**\n${list || "Trống."}`);
-        }
-
-        if (commandName === "chat") {
-            await interaction.deferReply();
-            const r = await getAIReply(interaction.options.getString("content"));
-            await interaction.editReply(r);
+        if (commandName === "stop") {
+            if (!isOwner) return interaction.reply({ content: "❌ Bạn không có quyền sử dụng lệnh này.", ephemeral: true });
+            autoReply = false;
+            await interaction.reply("Bot Off.");
         }
 
         if (commandName === "newchat") {
-            await BetData.deleteMany({}); await ChatData.deleteMany({});
+            if (!isOwner) return interaction.reply({ content: "❌ Bạn không có quyền sử dụng lệnh này.", ephemeral: true });
+            await BetData.deleteMany({});
+            await ChatData.deleteMany({});
             await interaction.reply("Đã xoá sạch data trên mây.");
         }
 
-        if (commandName === "start") { autoReply = true; await interaction.reply("Bot On."); }
-        if (commandName === "stop") { autoReply = false; await interaction.reply("Bot Off."); }
-        if (commandName === "avatar") { await interaction.reply(interaction.options.getUser("user").displayAvatarURL({ dynamic: true })); }
+        if (commandName === "dudoancobac" || commandName === "soicau" || commandName === "chat" || commandName === "avatar") {
+            // These commands are not restricted to the owner
+            if (commandName === "dudoancobac") {
+                const loai = interaction.options.getString("loai");
+                if (loai === "taixiu") {
+                    const dbTX = await BetData.find({ type: 'tx' });
+                    if (dbTX.length === 0) return interaction.reply("Mây k có data TX.");
+
+                    // 1. Tài Xỉu
+                    const taiCount = dbTX.filter(h => h.score >= 11).length;
+                    const taiRate = (taiCount / dbTX.length) * 100;
+                    const predTX_Goc = taiRate >= 50 ? "TÀI" : "XỈU";
+                    const predTX_Chot = Math.random() * 100 < taiRate ? "TÀI" : "XỈU";
+
+                    // 2. Chẵn Lẻ
+                    const chanCount = dbTX.filter(h => h.score % 2 === 0).length;
+                    const chanRate = (chanCount / dbTX.length) * 100;
+                    const predCL_Goc = chanRate >= 50 ? "CHẴN" : "LẺ";
+                    const predCL_Chot = Math.random() * 100 < chanRate ? "CHẴN" : "LẺ";
+
+                    // 3. Số
+                    const counts = {}; dbTX.forEach(h => counts[h.score] = (counts[h.score] || 0) + 1);
+                    const num_Goc = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                    const num_Chot = dbTX[Math.floor(Math.random() * dbTX.length)].score;
+
+                    const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`neko_tx_${interaction.user.id}`).setLabel('Lưu TX').setStyle(ButtonStyle.Primary));
+                    await interaction.reply({ 
+                        content: `📊 **PHÂN TÍCH CLOUD TX (${dbTX.length} ván)**\n━━━━━━━━━━━━━━━━━━\n🔴 **TÀI XỈU:**\n- Nhiều nhất: **${predTX_Goc}** (${Math.round(taiRate >= 50 ? taiRate : 100-taiRate)}%)\n- Dự đoán: **${predTX_Chot}**\n\n⚪ **CHẴN LẺ:**\n- Nhiều nhất: **${predCL_Goc}** (${Math.round(chanRate >= 50 ? chanRate : 100-chanRate)}%)\n- Dự đoán: **${predCL_Chot}**\n\n🎯 **SỐ:** Nhiều nhất **${num_Goc}** | Dự đoán **${num_Chot}**\n━━━━━━━━━━━━━━━━━━`, 
+                        components: [row] 
+                    });
+                } else {
+                    const dbBC = await BetData.find({ type: 'bc' });
+                    if (dbBC.length === 0) return interaction.reply("Mây k có data BC.");
+                    const flatAnimals = dbBC.flatMap(v => v.animals);
+                    const counts = {}; flatAnimals.forEach(a => counts[a] = (counts[a] || 0) + 1);
+                    const top1_Goc = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                    let chot = []; for (let i = 0; i < 3; i++) chot.push(flatAnimals[Math.floor(Math.random() * flatAnimals.length)]);
+                    const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`neko_bc_${interaction.user.id}`).setLabel('Lưu BC').setStyle(ButtonStyle.Danger));
+                    await interaction.reply({ content: `📊 **DỰ ĐOÁN BC CLOUD (${dbBC.length} ván)**\n━━━━━━━━━━━━━━━━━━\n✨ **Nhiều nhất:** Cao nhất **${top1_Goc}**\n🎲 **Dự đoán:** **${chot.join(" - ")}**\n━━━━━━━━━━━━━━━━━━`, components: [row] });
+                }
+            }
+
+            if (commandName === "soicau") {
+                const loai = interaction.options.getString("loai");
+                const data = await BetData.find({ type: loai === "taixiu" ? "tx" : "bc" }).sort({ createdAt: -1 }).limit(10);
+                const list = data.map((h, i) => `${i + 1}. **${h.score || h.resultStr}**`).join("\n");
+                await interaction.reply(`📜 **10 VÁN ${loai.toUpperCase()} MỚI NHẤT:**\n${list || "Trống."}`);
+            }
+
+            if (commandName === "chat") {
+                await interaction.deferReply();
+                const r = await getAIReply(interaction.options.getString("content"));
+                await interaction.editReply(r);
+            }
+
+            if (commandName === "avatar") {
+                await interaction.reply(interaction.options.getUser("user").displayAvatarURL({ dynamic: true }));
+            }
+        }
     }
 
     // --- XỬ LÝ LƯU DATA ---
