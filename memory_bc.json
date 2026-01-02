@@ -1,0 +1,170 @@
+[
+  {
+    "result": "🐟 Cá-🎃 Bầu-🎃 Bầu",
+    "animals": [
+      "🐟 Cá",
+      "🎃 Bầu",
+      "🎃 Bầu"
+    ],
+    "t": 1767284712158
+  },
+  {
+    "result": "🦌 Nai",
+    "animals": [
+      "🦌 Nai"
+    ],
+    "t": 1767284796015
+  },
+  {
+    "result": "🦐 Tôm-🦌 Nai-🦐 Tôm",
+    "animals": [
+      "🦐 Tôm",
+      "🦌 Nai",
+      "🦐 Tôm"
+    ],
+    "t": 1767284890159
+  },
+  {
+    "result": "🦐 Tôm-🐟 Cá-🦐 Tôm",
+    "animals": [
+      "🦐 Tôm",
+      "🐟 Cá",
+      "🦐 Tôm"
+    ],
+    "t": 1767284946245
+  },
+  {
+    "result": "🦐 Tôm-🦐 Tôm",
+    "animals": [
+      "🦐 Tôm",
+      "🦐 Tôm"
+    ],
+    "t": 1767285005643
+  },
+  {
+    "result": "🦐 Tôm-🐔 Gà-🦐 Tôm",
+    "animals": [
+      "🦐 Tôm",
+      "🐔 Gà",
+      "🦐 Tôm"
+    ],
+    "t": 1767285072212
+  },
+  {
+    "result": "🐔 Gà-🦀 Cua-🦐 Tôm",
+    "animals": [
+      "🐔 Gà",
+      "🦀 Cua",
+      "🦐 Tôm"
+    ],
+    "t": 1767285136185
+  },
+  {
+    "result": "🎃 Bầu-🎃 Bầu-🐔 Gà",
+    "animals": [
+      "🎃 Bầu",
+      "🎃 Bầu",
+      "🐔 Gà"
+    ],
+    "t": 1767285196506
+  },
+  {
+    "result": "🦐 Tôm-🐔 Gà-🦀 Cua",
+    "animals": [
+      "🦐 Tôm",
+      "🐔 Gà",
+      "🦀 Cua"
+    ],
+    "t": 1767285312022
+  },
+  {
+    "result": "🎃 Bầu-🎃 Bầu-🦐 Tôm",
+    "animals": [
+      "🎃 Bầu",
+      "🎃 Bầu",
+      "🦐 Tôm"
+    ],
+    "t": 1767324830478
+  },
+  {
+    "result": "🐔 Gà-🦀 Cua-🎃 Bầu",
+    "animals": [
+      "🐔 Gà",
+      "🦀 Cua",
+      "🎃 Bầu"
+    ],
+    "t": 1767324922416
+  },
+  {
+    "result": "🦌 Nai-🦀 Cua-🦀 Cua",
+    "animals": [
+      "🦌 Nai",
+      "🦀 Cua",
+      "🦀 Cua"
+    ],
+    "t": 1767326169698
+  },
+  {
+    "result": "🐔 Gà-🦐 Tôm-🐔 Gà",
+    "animals": [
+      "🐔 Gà",
+      "🦐 Tôm",
+      "🐔 Gà"
+    ],
+    "t": 1767328124930
+  },
+  {
+    "result": "🦌 Nai-🎃 Bầu-🦌 Nai",
+    "animals": [
+      "🦌 Nai",
+      "🎃 Bầu",
+      "🦌 Nai"
+    ],
+    "t": 1767328196714
+  },
+  {
+    "result": "🐔 Gà-🎃 Bầu-🦌 Nai",
+    "animals": [
+      "🐔 Gà",
+      "🎃 Bầu",
+      "🦌 Nai"
+    ],
+    "t": 1767328642785
+  },
+  {
+    "result": "🦀 Cua-🦀 Cua-🐟 Cá",
+    "animals": [
+      "🦀 Cua",
+      "🦀 Cua",
+      "🐟 Cá"
+    ],
+    "t": 1767328901012
+  },
+  {
+    "result": "🦀 Cua-🎃 Bầu-🐟 Cá",
+    "animals": [
+      "🦀 Cua",
+      "🎃 Bầu",
+      "🐟 Cá"
+    ],
+    "t": 1767328916136
+  },
+  {
+    "result": "🦐 Tôm-🦀 Cua-🦌 Nai",
+    "animals": [
+      "🦐 Tôm",
+      "🦀 Cua",
+      "🦌 Nai"
+    ],
+    "t": 1767329776273
+  },
+  {
+    "result": "🦌 Nai-🦌 Nai-🦌 Nai",
+    "animals": [
+      "🦌 Nai",
+      "🦌 Nai",
+      "🦌 Nai"
+    ],
+    "t": 1767329828866
+  }
+]
