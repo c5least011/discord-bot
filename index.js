@@ -87,13 +87,6 @@ client.on("interactionCreate", async (interaction) => {
             await interaction.reply("Bot Off.");
         }
 
-        if (commandName === "newchat") {
-            if (!isOwner) return interaction.reply({ content: "❌ Bạn không có quyền sử dụng lệnh này.", ephemeral: true });
-            await BetData.deleteMany({});
-            await ChatData.deleteMany({});
-            await interaction.reply("Đã xoá sạch data trên mây.");
-        }
-
         if (commandName === "dudoancobac" || commandName === "soicau" || commandName === "chat" || commandName === "avatar") {
             // These commands are not restricted to the owner
             if (commandName === "dudoancobac") {
