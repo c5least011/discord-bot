@@ -5,7 +5,6 @@ const {
     ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, 
     TextInputBuilder, TextInputStyle 
 } = require("discord.js");
-const axios = require("axios");
 
 // --- KẾT NỐI MÂY (MONGODB) ---
 mongoose.connect(process.env.MONGO_URI)
@@ -42,7 +41,7 @@ const commands = [
     new SlashCommandBuilder().setName("start").setDescription("Bật bot"),
     new SlashCommandBuilder().setName("stop").setDescription("Tắt bot"),
     new SlashCommandBuilder().setName("chat").setDescription("Chat vs AI").addStringOption(o => o.setName("content").setDescription("Nội dung").setRequired(true)),
-    new SlashCommandBuilder().setName("goiynoitu").setDescription("Gợi ý nối từ siêu tốc").addStringOption(o => o.setName("tu").setDescription("Từ cần nối").setRequired(true)),
+    new SlashCommandBuilder().setName("goiynoitu").setDescription("Gợi ý nối từ").addStringOption(o => o.setName("tu").setDescription("Nhập 1 từ").setRequired(true)),
     new SlashCommandBuilder().setName("dudoancobac").setDescription("Dự đoán ALL DATA trên mây").addStringOption(o => o.setName("loai").setDescription("TX hoặc BC").setRequired(true).addChoices({ name: "Tài Xỉu", value: "taixiu" }, { name: "Bầu Cua", value: "baucua" })),
     new SlashCommandBuilder().setName("soicau").setDescription("Xem 10 ván gần nhất").addStringOption(o => o.setName("loai").setDescription("Loại cầu").setRequired(true).addChoices({ name: "Tài Xỉu", value: "taixiu" }, { name: "Bầu Cua", value: "baucua" })),
     new SlashCommandBuilder().setName("avatar").setDescription("Bú avatar").addUserOption(o => o.setName("user").setDescription("User").setRequired(true))
@@ -53,14 +52,19 @@ const rest = new REST({ version: "10" }).setToken(TOKEN);
     try { await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands }); console.log("🚀 Bot Bịp Online!"); } catch (err) { console.error(err); }
 })();
 
-// --- AI LOGIC ---
+// --- AI LOGIC (Dùng fetch để tránh lỗi API Render) ---
 async function getAIReply(text) {
     let chatMem = await ChatData.findOne();
     if (!chatMem) chatMem = await ChatData.create({ history: [] });
-    const prompt = `Xưng m t. Ngôn ngữ genz, viết tắt "không" thành "k". Ngắn gọn nhất. Memory: ${JSON.stringify(chatMem.history.slice(-3))}\nU: ${text}`;
+    const prompt = `Xưng m t. Ngôn ngữ genz, viết tắt "không" thành "k". Memory: ${JSON.stringify(chatMem.history.slice(-3))}\nU: ${text}`;
     try {
-        const res = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, { contents: [{ parts: [{ text: prompt }] }] });
-        const rep = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || "k biết.";
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await response.json();
+        const rep = data?.candidates?.[0]?.content?.parts?.[0]?.text || "k biết.";
         chatMem.history.push(`U: ${text}`, `B: ${rep}`);
         if (chatMem.history.length > 20) chatMem.history.shift();
         await chatMem.save(); return rep;
@@ -68,11 +72,17 @@ async function getAIReply(text) {
 }
 
 async function getWordSuggestion(tu) {
-    const prompt = `M là chuyên gia nối từ. Hãy tìm 1 từ ghép tiếng Việt có 2 tiếng, bắt đầu bằng từ "${tu}". Từ đó phải có nghĩa và phổ biến. CHỈ TRẢ VỀ ĐÚNG CỤM TỪ ĐÓ, K GIẢI THÍCH GÌ THÊM.`;
+    const prompt = `M là chuyên gia ngôn ngữ Việt Nam. Hãy tìm 1 từ ghép 2 tiếng bắt đầu bằng từ "${tu}". Từ này phải có nghĩa, phổ biến. CHỈ TRẢ VỀ ĐÚNG 2 TIẾNG ĐÓ, K GIẢI THÍCH.`;
     try {
-        const res = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, { contents: [{ parts: [{ text: prompt }] }] });
-        return res.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "Chịu.";
-    } catch { return "Lỗi AI r."; }
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        });
+        const data = await response.json();
+        const rep = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        return rep ? rep.replace(/[*_]/g, '') : "Chịu.";
+    } catch { return "API oẳng r."; }
 }
 
 // --- XỬ LÝ LỆNH ---
@@ -83,21 +93,21 @@ client.on("interactionCreate", async (interaction) => {
 
         if (commandName === "start") {
             if (!isOwner) return interaction.reply({ content: "❌ Quyền gì?", ephemeral: true });
-            autoReply = true;
-            await interaction.reply("Bot On.");
+            autoReply = true; await interaction.reply("Bot On.");
         }
 
         if (commandName === "stop") {
             if (!isOwner) return interaction.reply({ content: "❌ Quyền gì?", ephemeral: true });
-            autoReply = false;
-            await interaction.reply("Bot Off.");
+            autoReply = false; await interaction.reply("Bot Off.");
         }
 
         if (commandName === "goiynoitu") {
             const tu = interaction.options.getString("tu").trim();
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ ephemeral: true }); // Chỉ người dùng thấy
             const res = await getWordSuggestion(tu);
-            const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId(`other_${tu}`).setLabel('Từ khác').setStyle(ButtonStyle.Secondary));
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder().setCustomId(`other_${tu}`).setLabel('Từ khác').setStyle(ButtonStyle.Secondary)
+            );
             await interaction.editReply({ content: `👉 **${res}**`, components: [row] });
         }
 
@@ -143,7 +153,7 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.isButton()) {
         if (interaction.customId.startsWith('other_')) {
             const tu = interaction.customId.split('_')[1];
-            await interaction.deferUpdate();
+            await interaction.deferUpdate(); // Không cần check owner
             const res = await getWordSuggestion(tu);
             await interaction.editReply({ content: `👉 **${res}**` });
         }
@@ -180,8 +190,9 @@ client.on("interactionCreate", async (interaction) => {
 });
 
 client.login(TOKEN);
+
+// Server chống lỗi Render
 const http = require('http');
 http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Bot is Online!');
+    res.writeHead(200); res.end('Bot Online!');
 }).listen(process.env.PORT || 3000);
